@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tabular-mlops-api
+  labels:
+    app.kubernetes.io/name: tabular-mlops-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tabular-mlops-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tabular-mlops-api
+    spec:
+      containers:
+        - name: api
+          image: tabular-mlops-lab:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: MODEL_PATH
+              value: /app/models/latest/model.skops
+            - name: LOG_LEVEL
+              value: INFO
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

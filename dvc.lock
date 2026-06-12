@@ -1,0 +1,58 @@
+schema: '2.0'
+stages:
+  prepare_data:
+    cmd: .venv/bin/python -m mlops_tabular.data
+    deps:
+    - path: src/mlops_tabular/config.py
+      hash: md5
+      md5: a89135c8f8089d8bf11316c8fe2bbf3c
+      size: 1364
+    - path: src/mlops_tabular/data.py
+      hash: md5
+      md5: 9ff467ee32a2379c27005956213095ce
+      size: 3080
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 5151d1bdaa856e83ba6872428f370e7b
+      size: 25617
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 8db27098bd14df5d329afb1682e74815
+      size: 100903
+    - path: data/raw/breast_cancer.csv
+      hash: md5
+      md5: 52ab81230bc1aa66aa82f68816674578
+      size: 126016
+  train:
+    cmd: .venv/bin/python -m mlops_tabular.train
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 5151d1bdaa856e83ba6872428f370e7b
+      size: 25617
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 8db27098bd14df5d329afb1682e74815
+      size: 100903
+    - path: src/mlops_tabular/config.py
+      hash: md5
+      md5: a89135c8f8089d8bf11316c8fe2bbf3c
+      size: 1364
+    - path: src/mlops_tabular/data.py
+      hash: md5
+      md5: 9ff467ee32a2379c27005956213095ce
+      size: 3080
+    - path: src/mlops_tabular/train.py
+      hash: md5
+      md5: de353495e21e89e6e454ea7ae8e51207
+      size: 4882
+    outs:
+    - path: models/latest/model.skops
+      hash: md5
+      md5: 6c87932c31f2874310fff9b2e23eef10
+      size: 5411605
+    - path: reports/metrics.json
+      hash: md5
+      md5: 07cf15a602d563cdef05bc1711ad04ff
+      size: 98

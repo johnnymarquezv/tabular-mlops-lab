@@ -1,0 +1,75 @@
+[project]
+name = "tabular-mlops-lab"
+version = "0.1.0"
+description = "Portfolio-ready local MLOps lab for tabular classification, experiment tracking, API inference, and kind Kubernetes deployment."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+keywords = ["mlops", "machine-learning", "fastapi", "mlflow", "dvc", "kubernetes"]
+authors = [
+    { name = "Johnny Marquez" },
+]
+dependencies = [
+    "dvc>=3.0",
+    "fastapi>=0.115",
+    "mlflow>=2.17",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "prometheus-client>=0.21",
+    "pydantic>=2.9",
+    "python-json-logger>=2.0",
+    "scikit-learn>=1.5",
+    "skops>=0.10",
+    "uvicorn[standard]>=0.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx2>=2.4",
+    "mypy>=1.13",
+    "pandas-stubs>=2.2",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "ruff>=0.7",
+    "types-PyYAML>=6.0",
+]
+
+[project.scripts]
+mlops-prepare-data = "mlops_tabular.data:main"
+mlops-train = "mlops_tabular.train:main"
+mlops-serve = "mlops_tabular.api:main"
+
+[project.urls]
+Repository = "https://github.com/johnnymarquezv/tabular-mlops-lab"
+Documentation = "https://github.com/johnnymarquezv/tabular-mlops-lab/tree/main/docs"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mlops_tabular"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "S"]
+ignore = [
+    "S101",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+ignore_missing_imports = true
+plugins = []
+
+[tool.coverage.run]
+source = ["mlops_tabular"]

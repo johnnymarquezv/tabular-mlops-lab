@@ -1,0 +1,24 @@
+stages:
+  prepare_data:
+    cmd: .venv/bin/python -m mlops_tabular.data
+    deps:
+      - src/mlops_tabular/data.py
+      - src/mlops_tabular/config.py
+    outs:
+      - data/raw/breast_cancer.csv
+      - data/processed/train.csv
+      - data/processed/test.csv
+
+  train:
+    cmd: .venv/bin/python -m mlops_tabular.train
+    deps:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - src/mlops_tabular/config.py
+      - src/mlops_tabular/data.py
+      - src/mlops_tabular/train.py
+    outs:
+      - models/latest/model.skops
+    metrics:
+      - reports/metrics.json:
+          cache: false
