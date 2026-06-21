@@ -14,6 +14,9 @@ MODEL_DIR = PROJECT_ROOT / "models" / "latest"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 MODEL_PATH = MODEL_DIR / "model.skops"
 METRICS_PATH = REPORTS_DIR / "metrics.json"
+DATA_VALIDATION_PATH = REPORTS_DIR / "data_validation.json"
+EVALUATION_PATH = REPORTS_DIR / "evaluation.json"
+PROMOTION_PATH = REPORTS_DIR / "promotion.json"
 
 
 def _env_float(name: str, default: float) -> float:
@@ -37,6 +40,9 @@ class Settings:
     random_state: int = _env_int("MLOPS_RANDOM_STATE", 42)
     test_size: float = _env_float("MLOPS_TEST_SIZE", 0.2)
     n_estimators: int = _env_int("MLOPS_N_ESTIMATORS", 200)
+    min_accuracy: float = _env_float("MLOPS_MIN_ACCURACY", 0.9)
+    min_f1: float = _env_float("MLOPS_MIN_F1", 0.9)
+    min_roc_auc: float = _env_float("MLOPS_MIN_ROC_AUC", 0.9)
     mlflow_experiment: str = os.getenv("MLFLOW_EXPERIMENT_NAME", "tabular-classification")
     mlflow_tracking_uri: str = os.getenv("MLFLOW_TRACKING_URI", f"file://{PROJECT_ROOT / 'mlruns'}")
     mlflow_registered_model_name: str = os.getenv(

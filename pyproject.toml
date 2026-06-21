@@ -36,7 +36,10 @@ dev = [
 
 [project.scripts]
 mlops-prepare-data = "mlops_tabular.data:main"
+mlops-validate-data = "mlops_tabular.validate:main"
 mlops-train = "mlops_tabular.train:main"
+mlops-evaluate = "mlops_tabular.evaluate:main"
+mlops-promote-model = "mlops_tabular.promote_model:main"
 mlops-serve = "mlops_tabular.api:main"
 
 [project.urls]

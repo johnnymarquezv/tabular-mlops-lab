@@ -65,8 +65,7 @@ python3 -m pip install -e ".[dev]"
 Prepare data and train:
 
 ```bash
-python3 -m mlops_tabular.data
-python3 -m mlops_tabular.train
+python3 -m dvc repro
 ```
 
 Start the API:
@@ -83,33 +82,37 @@ http://127.0.0.1:8000/docs
 
 ## Useful Commands
 
+Run the automated local pipeline:
+
+```bash
+make repro
+```
+
 Run checks:
 
 ```bash
-python3 -m ruff check .
-python3 -m mypy src tests
-python3 -m pytest
-```
-
-Reproduce the DVC pipeline:
-
-```bash
-python3 -m dvc repro
+make test
 ```
 
 Open MLflow:
 
 ```bash
-PYTHONPATH=. MLFLOW_ALLOW_FILE_STORE=true python3 -m mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
+make mlflow
+```
+
+Build and smoke-test the Docker image:
+
+```bash
+make docker-build
+make docker-smoke
 ```
 
 Deploy to local Kubernetes:
 
 ```bash
-kubectl config use-context orbstack
-docker build -t tabular-mlops-lab:latest .
-kubectl apply -k k8s/base
-kubectl port-forward service/tabular-mlops-api 8000:80
+make k8s-deploy
+make k8s-smoke
+make k8s-port-forward
 ```
 
 ## Pipeline Flow
@@ -120,9 +123,8 @@ Data preparation creates a raw dataset snapshot and processed train/test splits:
 src/mlops_tabular/data.py -> data/raw/ + data/processed/
 ```
 
-Training loads the processed data, fits a scikit-learn pipeline, evaluates it,
-logs an MLflow run, registers a model version, moves the `champion` alias, and
-saves the current serving artifact:
+Training loads the processed data, fits a scikit-learn pipeline, logs an MLflow
+run, registers a candidate model version, and saves the current serving artifact:
 
 ```text
 src/mlops_tabular/train.py
@@ -130,6 +132,10 @@ src/mlops_tabular/train.py
   -> models/latest/model.skops
   -> reports/metrics.json
 ```
+
+Evaluation recomputes metrics from the saved serving model and enforces minimum
+quality thresholds. Promotion moves the `champion` registry alias only after
+evaluation passes.
 
 The API loads `models/latest/model.skops` and serves predictions through
 `POST /predict`. The response includes the predicted class, probabilities, the
@@ -140,7 +146,10 @@ MLflow run id, and the registered model name/version/alias.
 DVC defines the reproducible pipeline in `dvc.yaml`:
 
 - `prepare_data`: runs `python3 -m mlops_tabular.data`
+- `validate_data`: runs `python3 -m mlops_tabular.validate`
 - `train`: runs `python3 -m mlops_tabular.train`
+- `evaluate`: runs `python3 -m mlops_tabular.evaluate`
+- `promote_model`: runs `python3 -m mlops_tabular.promote_model`
 
 Use DVC to check whether generated outputs are stale:
 
@@ -166,8 +175,18 @@ mlruns/
 ```
 
 Each training run logs parameters, metrics, artifacts, and a scikit-learn model.
-The run also registers a new version of `tabular-mlops-classifier` and points the
-`champion` alias at that version.
+The run also registers a new version of `tabular-mlops-classifier`. The
+promotion stage points the `champion` alias at that version after evaluation
+passes.
+
+MLflow separates the backend store from the artifact store conceptually:
+
+- backend store: experiments, runs, params, metrics, tags, registry versions, and
+  aliases
+- artifact store: model files, reports, input examples, and other logged files
+
+This local project does not configure a separate artifact destination. Both the
+backend metadata and artifact files are stored under `mlruns/`.
 
 Open the MLflow UI:
 
@@ -215,13 +234,28 @@ kubectl port-forward service/tabular-mlops-api 8000:80
 
 The service also exposes NodePort `30080`.
 
+## Automation Targets
+
+The `Makefile` wraps common local automation:
+
+- `make setup`: create the external virtual environment and install dependencies
+- `make repro`: run the full DVC pipeline
+- `make test`: run Ruff, mypy, and pytest
+- `make api`: start FastAPI locally
+- `make mlflow`: start the MLflow UI
+- `make docker-build`: build the API image
+- `make docker-smoke`: run the image and check `/health`
+- `make k8s-deploy`: apply Kubernetes manifests to OrbStack
+- `make k8s-smoke`: check the Kubernetes rollout and `/health`
+- `make clean`: remove generated local outputs
+
 ## Generated Outputs
 
 These directories are generated locally and ignored by Git:
 
 - `data/`: raw and processed CSV files
 - `models/`: current serving model artifact
-- `reports/`: training metrics
+- `reports/`: validation, training, evaluation, and promotion reports
 - `mlruns/`: MLflow runs, artifacts, registry versions, and aliases
 
 To clean generated outputs and rebuild:

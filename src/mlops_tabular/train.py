@@ -14,7 +14,6 @@ import mlflow.sklearn
 import pandas as pd
 import skops.io as sio
 from mlflow.models import infer_signature
-from mlflow.tracking import MlflowClient
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.pipeline import Pipeline
@@ -130,11 +129,6 @@ def train_model(active_settings: Settings = settings) -> TrainingResult:
             tags={"mlflow_run_id": run_id},
         )
         registered_model_version = str(model_version.version)
-        MlflowClient().set_registered_model_alias(
-            active_settings.mlflow_registered_model_name,
-            active_settings.mlflow_model_alias,
-            registered_model_version,
-        )
 
         model_bundle: dict[str, Any] = {
             "pipeline": pipeline,
@@ -170,7 +164,7 @@ def main() -> None:
     print(
         "Registered model: "
         f"{result.registered_model_name} version {result.registered_model_version} "
-        f"alias {result.registered_model_alias}"
+        f"candidate for alias {result.registered_model_alias}"
     )
     print(f"Model saved to {result.model_path}")
     print(f"Metrics saved to {result.metrics_path}")

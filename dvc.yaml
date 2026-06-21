@@ -9,6 +9,19 @@ stages:
       - data/processed/train.csv
       - data/processed/test.csv
 
+  validate_data:
+    cmd: python3 -m mlops_tabular.validate
+    deps:
+      - data/raw/breast_cancer.csv
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - src/mlops_tabular/config.py
+      - src/mlops_tabular/data.py
+      - src/mlops_tabular/validate.py
+    metrics:
+      - reports/data_validation.json:
+          cache: false
+
   train:
     cmd: python3 -m mlops_tabular.train
     deps:
@@ -21,4 +34,29 @@ stages:
       - models/latest/model.skops
     metrics:
       - reports/metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python3 -m mlops_tabular.evaluate
+    deps:
+      - data/processed/test.csv
+      - models/latest/model.skops
+      - src/mlops_tabular/config.py
+      - src/mlops_tabular/data.py
+      - src/mlops_tabular/evaluate.py
+      - src/mlops_tabular/model.py
+    metrics:
+      - reports/evaluation.json:
+          cache: false
+
+  promote_model:
+    cmd: python3 -m mlops_tabular.promote_model
+    deps:
+      - models/latest/model.skops
+      - reports/evaluation.json
+      - src/mlops_tabular/config.py
+      - src/mlops_tabular/model.py
+      - src/mlops_tabular/promote_model.py
+    outs:
+      - reports/promotion.json:
           cache: false
