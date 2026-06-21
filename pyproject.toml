@@ -41,7 +41,7 @@ mlops-serve = "mlops_tabular.api:main"
 
 [project.urls]
 Repository = "https://github.com/johnnymarquezv/tabular-mlops-lab"
-Documentation = "https://github.com/johnnymarquezv/tabular-mlops-lab/tree/main/docs"
+Documentation = "https://github.com/johnnymarquezv/tabular-mlops-lab#readme"
 
 [build-system]
 requires = ["hatchling"]
