@@ -24,8 +24,8 @@ Important sections:
 
 Defines the DVC pipeline. It has two stages:
 
-- `prepare_data`: runs `.venv/bin/python -m mlops_tabular.data`
-- `train`: runs `.venv/bin/python -m mlops_tabular.train`
+- `prepare_data`: runs `python3 -m mlops_tabular.data`
+- `train`: runs `python3 -m mlops_tabular.train`
 
 `dvc.lock`
 
@@ -34,7 +34,7 @@ hashes, output hashes, and the exact pipeline state from the latest run.
 
 `Dockerfile`
 
-Builds the inference API image. It starts from `python:3.11-slim`, installs the
+Builds the inference API image. It starts from `python:3-slim`, installs the
 package with `pip`, and runs Uvicorn.
 
 `.dockerignore`
@@ -43,8 +43,8 @@ Excludes local development files and generated caches from Docker build context.
 
 `.gitignore`
 
-Excludes virtual environments, Python caches, generated data, models, reports,
-MLflow runs, and other local-only files.
+Excludes Python caches, generated data, models, reports, MLflow runs, and other
+local-only files.
 
 `.pre-commit-config.yaml`
 
@@ -55,17 +55,14 @@ Defines pre-commit hooks for formatting, YAML checks, Ruff, and mypy.
 Shows optional environment variables that can override default training,
 tracking, model path, and logging settings. It does not contain secrets.
 
+`sitecustomize.py`
+
+Provides a small compatibility shim for MLflow's local UI startup when the repo
+is included through `PYTHONPATH=.`.
+
 `LICENSE`
 
 Declares the project license.
-
-`CONTRIBUTING.md`
-
-Documents local setup, checks, and contribution expectations.
-
-`SECURITY.md`
-
-Documents security notes for model artifacts, secrets, and educational use.
 
 `.dvcignore`
 
@@ -102,6 +99,8 @@ Defines:
 - `MLOPS_N_ESTIMATORS`
 - `MLFLOW_EXPERIMENT_NAME`
 - `MLFLOW_TRACKING_URI`
+- `MLFLOW_REGISTERED_MODEL_NAME`
+- `MLFLOW_MODEL_ALIAS`
 - `MODEL_PATH`
 
 `src/mlops_tabular/data.py`
@@ -119,7 +118,7 @@ Main responsibilities:
 Run it with:
 
 ```bash
-.venv/bin/python -m mlops_tabular.data
+python3 -m mlops_tabular.data
 ```
 
 `src/mlops_tabular/train.py`
@@ -134,13 +133,15 @@ Main responsibilities:
 - Train `RandomForestClassifier`.
 - Evaluate accuracy, F1, and ROC AUC.
 - Log parameters and metrics to MLflow.
+- Register a model version in the MLflow Model Registry.
+- Move the configured model alias to the new version.
 - Save `models/latest/model.skops`.
 - Save `reports/metrics.json`.
 
 Run it with:
 
 ```bash
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.train
 ```
 
 `src/mlops_tabular/model.py`
@@ -198,10 +199,6 @@ Tests the FastAPI health and prediction endpoints using the trained model.
 
 ## Kubernetes Files
 
-`k8s/kind/cluster.yaml`
-
-Defines the local `kind` cluster. It maps host port `8080` to node port `30080`.
-
 `k8s/base/deployment.yaml`
 
 Defines the API Kubernetes `Deployment`.
@@ -225,6 +222,9 @@ Collects the deployment and service so they can be applied with:
 ```bash
 kubectl apply -k k8s/base
 ```
+
+OrbStack supplies the local Kubernetes cluster for development, so this project
+does not need a provider-specific cluster configuration file.
 
 ## CI
 

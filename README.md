@@ -19,14 +19,14 @@ tumor samples as `malignant` or `benign`.
 - Safer scikit-learn artifact persistence with `skops`
 - FastAPI inference service with browser docs at `/docs`
 - Prometheus-compatible metrics at `/metrics`
-- Docker image and `kind` Kubernetes manifests
+- Docker image and OrbStack Kubernetes manifests
 - CI-ready checks with Ruff, mypy, and pytest
 - Detailed documentation in `docs/`
 
 ## Tech Stack
 
 Python, scikit-learn, pandas, MLflow, DVC, FastAPI, Pydantic, Prometheus client,
-Docker, kind, Kubernetes, Ruff, mypy, pytest, GitHub Actions.
+Docker, OrbStack, Kubernetes, Ruff, mypy, pytest, GitHub Actions.
 
 ## Architecture
 
@@ -36,11 +36,13 @@ flowchart LR
     Prepare --> Splits["data/processed/*.csv"]
     Splits --> Train["train.py"]
     Train --> MLflow["mlruns/"]
+    MLflow --> Registry["MLflow Model Registry"]
     Train --> Metrics["reports/metrics.json"]
     Train --> Model["models/latest/model.skops"]
+    Registry --> Model
     Model --> API["FastAPI /predict"]
     API --> Prometheus["/metrics"]
-    API --> Kubernetes["Docker + kind"]
+    API --> Kubernetes["Docker + OrbStack"]
 ```
 
 ## Quickstart
@@ -52,25 +54,26 @@ git clone https://github.com/johnnymarquezv/tabular-mlops-lab.git
 cd tabular-mlops-lab
 ```
 
-Create the environment:
+Create an environment outside the project and install dependencies:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -e ".[dev]"
+python3 -m venv ~/.venvs/tabular-mlops-lab
+source ~/.venvs/tabular-mlops-lab/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -e ".[dev]"
 ```
 
 Prepare data and train:
 
 ```bash
-.venv/bin/python -m mlops_tabular.data
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.data
+python3 -m mlops_tabular.train
 ```
 
 Start the API:
 
 ```bash
-.venv/bin/uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
+python3 -m uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Open:
@@ -84,42 +87,41 @@ http://127.0.0.1:8000/docs
 Run checks:
 
 ```bash
-.venv/bin/python -m ruff check .
-.venv/bin/python -m mypy src tests
-.venv/bin/python -m pytest
+python3 -m ruff check .
+python3 -m mypy src tests
+python3 -m pytest
 ```
 
 Reproduce the DVC pipeline:
 
 ```bash
-.venv/bin/dvc repro
+python3 -m dvc repro
 ```
 
 Open MLflow:
 
 ```bash
-MLFLOW_ALLOW_FILE_STORE=true .venv/bin/mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
+PYTHONPATH=. MLFLOW_ALLOW_FILE_STORE=true python3 -m mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
 ```
 
 Deploy to local Kubernetes:
 
 ```bash
-kind create cluster --name tabular-mlops-lab --config k8s/kind/cluster.yaml
+kubectl config use-context orbstack
 docker build -t tabular-mlops-lab:latest .
-kind load docker-image tabular-mlops-lab:latest --name tabular-mlops-lab
 kubectl apply -k k8s/base
 kubectl port-forward service/tabular-mlops-api 8000:80
 ```
 
 ## Documentation
 
-- `docs/concepts.md`: MLOps concepts and tool choices
-- `docs/end-to-end-flow.md`: how data, training, MLflow, artifacts, and the API connect
-- `docs/workflows.md`: setup, data, training, serving, MLflow, DVC, and validation
-- `docs/project-structure.md`: what each file and directory does
-- `docs/artifacts-and-outputs.md`: generated outputs such as `data/`, `mlruns/`, `models/`, and `reports/`
-- `docs/deployment.md`: Docker, `kind`, Kubernetes, and local-vs-cluster MLflow notes
-- `docs/portfolio.md`: portfolio talking points, resume bullets, and extension ideas
+- `docs/01-concepts.md`: MLOps concepts and tool choices
+- `docs/02-end-to-end-flow.md`: how data, training, MLflow, artifacts, and the API connect
+- `docs/03-workflows.md`: setup, data, training, serving, MLflow, DVC, and validation
+- `docs/04-project-structure.md`: what each file and directory does
+- `docs/05-artifacts-and-outputs.md`: generated outputs such as `data/`, `mlruns/`, `models/`, and `reports/`
+- `docs/06-deployment.md`: Docker, OrbStack Kubernetes, and local-vs-cluster MLflow notes
+- `docs/07-portfolio.md`: portfolio talking points, resume bullets, and extension ideas
 
 ## Repository Status
 

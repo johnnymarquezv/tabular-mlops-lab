@@ -4,12 +4,13 @@ This document follows one model run through the whole project.
 
 ## 1. Environment Setup
 
-You create `.venv/` and install the package:
+Create an environment outside the project and install the package:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -e ".[dev]"
+python3 -m venv ~/.venvs/tabular-mlops-lab
+source ~/.venvs/tabular-mlops-lab/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -e ".[dev]"
 ```
 
 After this, Python can import `mlops_tabular` from `src/mlops_tabular`.
@@ -19,7 +20,7 @@ After this, Python can import `mlops_tabular` from `src/mlops_tabular`.
 Run:
 
 ```bash
-.venv/bin/python -m mlops_tabular.data
+python3 -m mlops_tabular.data
 ```
 
 Python executes `src/mlops_tabular/data.py`.
@@ -37,7 +38,7 @@ The module:
 Run:
 
 ```bash
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.train
 ```
 
 Python executes `src/mlops_tabular/train.py`.
@@ -51,8 +52,11 @@ The module:
 5. Calculates metrics.
 6. Starts an MLflow run.
 7. Logs parameters and metrics.
-8. Saves `models/latest/model.skops`.
-9. Saves `reports/metrics.json`.
+8. Logs the model artifact to MLflow.
+9. Registers a new `tabular-mlops-classifier` model version.
+10. Moves the `champion` alias to that version.
+11. Saves `models/latest/model.skops`.
+12. Saves `reports/metrics.json`.
 
 ## 4. Experiment Tracking
 
@@ -61,7 +65,7 @@ MLflow writes run metadata under `mlruns/`.
 You can inspect it with:
 
 ```bash
-MLFLOW_ALLOW_FILE_STORE=true .venv/bin/mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
+PYTHONPATH=. MLFLOW_ALLOW_FILE_STORE=true python3 -m mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
 ```
 
 MLflow answers questions such as:
@@ -69,13 +73,14 @@ MLflow answers questions such as:
 - Which parameters did this run use?
 - What metrics did this run produce?
 - Which run produced the model currently being served?
+- Which registered model version and alias point at this model?
 
 ## 5. Model Serving
 
 Run:
 
 ```bash
-.venv/bin/uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
+python3 -m uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 FastAPI imports `src/mlops_tabular/api.py`.
@@ -96,7 +101,7 @@ When a request reaches `POST /predict`:
 Run:
 
 ```bash
-.venv/bin/dvc repro
+python3 -m dvc repro
 ```
 
 DVC reads `dvc.yaml` and runs stages only when needed.
@@ -115,11 +120,10 @@ Build the image:
 docker build -t tabular-mlops-lab:latest .
 ```
 
-Create the local cluster and deploy:
+Select the OrbStack Kubernetes context and deploy:
 
 ```bash
-kind create cluster --name tabular-mlops-lab --config k8s/kind/cluster.yaml
-kind load docker-image tabular-mlops-lab:latest --name tabular-mlops-lab
+kubectl config use-context orbstack
 kubectl apply -k k8s/base
 kubectl port-forward service/tabular-mlops-api 8000:80
 ```

@@ -39,6 +39,11 @@ class Settings:
     n_estimators: int = _env_int("MLOPS_N_ESTIMATORS", 200)
     mlflow_experiment: str = os.getenv("MLFLOW_EXPERIMENT_NAME", "tabular-classification")
     mlflow_tracking_uri: str = os.getenv("MLFLOW_TRACKING_URI", f"file://{PROJECT_ROOT / 'mlruns'}")
+    mlflow_registered_model_name: str = os.getenv(
+        "MLFLOW_REGISTERED_MODEL_NAME",
+        "tabular-mlops-classifier",
+    )
+    mlflow_model_alias: str = os.getenv("MLFLOW_MODEL_ALIAS", "champion")
     model_path: Path = Path(os.getenv("MODEL_PATH", str(MODEL_PATH)))
 
 

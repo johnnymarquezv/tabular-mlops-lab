@@ -45,6 +45,18 @@ MLflow records each training run. A run contains:
 
 This lets you compare model runs instead of relying on terminal output.
 
+### Model Registry
+
+The MLflow Model Registry creates versioned model records from training runs.
+Each training run registers a new version of `tabular-mlops-classifier` and moves
+the `champion` alias to that version.
+
+This gives the project a local promotion record:
+
+- experiment run: how the model was trained
+- registered model version: which model artifact was promoted
+- alias: which version is considered current
+
 ### Model Artifact
 
 Training saves the latest model to `models/latest/model.skops`. The API loads
@@ -57,6 +69,7 @@ The saved artifact includes:
 - target labels
 - evaluation metrics
 - the MLflow run id that produced the model
+- the registered model name, version, and alias
 
 The project uses `skops` instead of pickle/joblib for model persistence because
 it is safer for scikit-learn model serialization.
@@ -81,7 +94,7 @@ also monitor model quality, input drift, output drift, and data quality.
 
 ### Local Kubernetes
 
-`kind` runs a Kubernetes cluster locally. The project uses it to show how the
+OrbStack runs a Kubernetes cluster locally. The project uses it to show how the
 API can be packaged as a container and deployed as a Kubernetes workload.
 
 MLflow stays local in this scaffold. Running MLflow inside Kubernetes is possible
@@ -89,7 +102,7 @@ but requires extra persistence and backend services.
 
 ## Tool Choices
 
-- Python `venv` and `pip`: native Python environment management.
+- `pip`: Python package installation.
 - scikit-learn: simple, widely used ML library for tabular models.
 - DVC: reproducible data and model pipeline stages.
 - MLflow: experiment tracking and model metadata.
@@ -97,5 +110,5 @@ but requires extra persistence and backend services.
 - FastAPI: typed HTTP API for inference.
 - Prometheus client: metrics endpoint for service monitoring.
 - Docker: container image for the API.
-- kind and kubectl: local Kubernetes deployment.
+- OrbStack and kubectl: local Kubernetes deployment.
 - Ruff, mypy, pytest: linting, type checking, and tests.

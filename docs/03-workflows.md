@@ -1,20 +1,21 @@
 # Workflows
 
-This file explains how to run the project with direct virtual environment
-commands.
+This file explains how to run the project with direct Python module commands.
 
 ## 1. Create The Environment
 
 From the project root:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -e ".[dev]"
+python3 -m venv ~/.venvs/tabular-mlops-lab
+source ~/.venvs/tabular-mlops-lab/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -e ".[dev]"
 ```
 
-This creates `.venv/`, installs the package in editable mode, and installs
-development tools such as pytest, Ruff, mypy, DVC, and MLflow.
+This keeps the Python environment outside the repository, installs the package in
+editable mode, and installs development tools such as pytest, Ruff, mypy, DVC,
+and MLflow. Activate the environment before running the commands below.
 
 Editable mode matters because the package source lives under `src/`. After
 installation, Python can import `mlops_tabular` from that source directory.
@@ -22,7 +23,7 @@ installation, Python can import `mlops_tabular` from that source directory.
 ## 2. Prepare Data
 
 ```bash
-.venv/bin/python -m mlops_tabular.data
+python3 -m mlops_tabular.data
 ```
 
 This runs `src/mlops_tabular/data.py`.
@@ -39,7 +40,7 @@ feature names, adds target labels, and creates stratified train/test splits.
 ## 3. Train The Model
 
 ```bash
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.train
 ```
 
 This runs `src/mlops_tabular/train.py`.
@@ -52,12 +53,13 @@ Outputs:
 
 Training builds a scikit-learn pipeline with `StandardScaler` and
 `RandomForestClassifier`. It evaluates the model on the test split and logs the
-run to MLflow.
+run to MLflow. It also registers a new `tabular-mlops-classifier` model version
+and moves the `champion` alias to that version.
 
 ## 4. Serve The Model Locally
 
 ```bash
-.venv/bin/uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
+python3 -m uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 The API runs at:
@@ -102,14 +104,17 @@ Example response:
     "malignant": 0.98,
     "benign": 0.02
   },
-  "mlflow_run_id": "..."
+  "mlflow_run_id": "...",
+  "registered_model_name": "tabular-mlops-classifier",
+  "registered_model_version": "...",
+  "registered_model_alias": "champion"
 }
 ```
 
 ## 6. View MLflow
 
 ```bash
-MLFLOW_ALLOW_FILE_STORE=true .venv/bin/mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
+PYTHONPATH=. MLFLOW_ALLOW_FILE_STORE=true python3 -m mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
 ```
 
 Open:
@@ -119,12 +124,13 @@ http://127.0.0.1:5000
 ```
 
 Use MLflow to inspect runs, parameters, metrics, and logged artifacts. MLflow is
-not the inference UI; the inference UI is FastAPI's `/docs` page.
+also where you can inspect the local Model Registry entry and its versions.
+MLflow is not the inference UI; the inference UI is FastAPI's `/docs` page.
 
 ## 7. Reproduce The Pipeline With DVC
 
 ```bash
-.venv/bin/dvc repro
+python3 -m dvc repro
 ```
 
 DVC reads `dvc.yaml`, checks whether dependencies changed, and runs only the
@@ -140,9 +146,9 @@ DVC updates `dvc.lock` after a successful run.
 ## 8. Run Quality Checks
 
 ```bash
-.venv/bin/python -m ruff check .
-.venv/bin/python -m mypy src tests
-.venv/bin/python -m pytest
+python3 -m ruff check .
+python3 -m mypy src tests
+python3 -m pytest
 ```
 
 These checks are also represented in GitHub Actions.
@@ -151,9 +157,9 @@ These checks are also represented in GitHub Actions.
 
 The project defines these console scripts in `pyproject.toml`:
 
-- `.venv/bin/mlops-prepare-data`
-- `.venv/bin/mlops-train`
-- `.venv/bin/mlops-serve`
+- `mlops-prepare-data`
+- `mlops-train`
+- `mlops-serve`
 
-The documentation uses `python -m ...` commands because they show clearly which
+The documentation uses `python3 -m ...` commands because they show clearly which
 module runs. The console scripts are equivalent shortcuts.

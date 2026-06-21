@@ -23,6 +23,9 @@ class ModelBundle:
     target_names: list[str]
     metrics: dict[str, float]
     mlflow_run_id: str
+    registered_model_name: str | None = None
+    registered_model_version: str | None = None
+    registered_model_alias: str | None = None
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,9 @@ class PredictionResult:
     predicted_label: str
     probabilities: dict[str, float]
     mlflow_run_id: str
+    registered_model_name: str | None = None
+    registered_model_version: str | None = None
+    registered_model_alias: str | None = None
 
 
 def load_model_bundle(model_path: Path = MODEL_PATH) -> ModelBundle:
@@ -41,7 +47,7 @@ def load_model_bundle(model_path: Path = MODEL_PATH) -> ModelBundle:
     if not model_path.exists():
         raise FileNotFoundError(
             f"Model artifact not found at {model_path}. "
-            "Run `.venv/bin/python -m mlops_tabular.train` first."
+            "Run `python3 -m mlops_tabular.train` first."
         )
 
     trusted_types = sio.get_untrusted_types(file=model_path)
@@ -55,6 +61,19 @@ def load_model_bundle(model_path: Path = MODEL_PATH) -> ModelBundle:
         target_names=[str(name) for name in raw_bundle["target_names"]],
         metrics={str(name): float(value) for name, value in raw_bundle["metrics"].items()},
         mlflow_run_id=str(raw_bundle["mlflow_run_id"]),
+        registered_model_name=(
+            str(raw_bundle["mlflow_registered_model_name"])
+            if "mlflow_registered_model_name" in raw_bundle
+            else None
+        ),
+        registered_model_version=(
+            str(raw_bundle["mlflow_registered_model_version"])
+            if "mlflow_registered_model_version" in raw_bundle
+            else None
+        ),
+        registered_model_alias=(
+            str(raw_bundle["mlflow_model_alias"]) if "mlflow_model_alias" in raw_bundle else None
+        ),
     )
 
 
@@ -104,4 +123,7 @@ def predict(features: Mapping[str, float], bundle: ModelBundle | None = None) ->
         predicted_label=predicted_label,
         probabilities=probabilities,
         mlflow_run_id=active_bundle.mlflow_run_id,
+        registered_model_name=active_bundle.registered_model_name,
+        registered_model_version=active_bundle.registered_model_version,
+        registered_model_alias=active_bundle.registered_model_alias,
     )

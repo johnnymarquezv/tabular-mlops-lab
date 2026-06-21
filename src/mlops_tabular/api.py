@@ -41,6 +41,9 @@ class HealthResponse(BaseModel):
     model_loaded: bool
     model_path: str
     mlflow_run_id: str | None = None
+    registered_model_name: str | None = None
+    registered_model_version: str | None = None
+    registered_model_alias: str | None = None
     metrics: dict[str, float] | None = None
 
 
@@ -88,6 +91,9 @@ class PredictResponse(BaseModel):
     predicted_label: str
     probabilities: dict[str, float]
     mlflow_run_id: str
+    registered_model_name: str | None = None
+    registered_model_version: str | None = None
+    registered_model_alias: str | None = None
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -102,6 +108,9 @@ def health() -> HealthResponse:
         model_loaded=True,
         model_path=str(MODEL_PATH),
         mlflow_run_id=bundle.mlflow_run_id,
+        registered_model_name=bundle.registered_model_name,
+        registered_model_version=bundle.registered_model_version,
+        registered_model_alias=bundle.registered_model_alias,
         metrics=bundle.metrics,
     )
 

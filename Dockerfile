@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS runtime
+FROM python:3-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
@@ -7,8 +7,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN python -m pip install --upgrade pip \
-    && python -m pip install --no-cache-dir .
+RUN python3 -m pip install --upgrade pip \
+    && python3 -m pip install --no-cache-dir .
 
 EXPOSE 8000
 

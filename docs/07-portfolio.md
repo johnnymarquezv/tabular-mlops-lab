@@ -15,17 +15,20 @@ containerization, and local Kubernetes deployment.
 - Built a reproducible ML pipeline with DVC.
 - Trained and evaluated a scikit-learn tabular classifier.
 - Tracked experiment parameters, metrics, and artifacts with MLflow.
+- Registered model versions and maintained a local `champion` alias with MLflow
+  Model Registry.
 - Persisted the serving model with `skops`.
 - Exposed model inference through a FastAPI service.
 - Added Prometheus-compatible request and latency metrics.
 - Containerized the inference service with Docker.
-- Deployed the service to a local `kind` Kubernetes cluster.
+- Deployed the service to a local OrbStack Kubernetes cluster.
 - Added CI-ready quality gates with Ruff, mypy, and pytest.
 
 ## Resume Bullets
 
 - Built a local-first MLOps lab for tabular classification using scikit-learn,
-  DVC, MLflow, FastAPI, Docker, and Kubernetes.
+  DVC, MLflow experiment tracking and Model Registry, FastAPI, Docker, and
+  Kubernetes.
 - Implemented reproducible data preparation and model training stages with DVC,
   producing versioned datasets, metrics, and model artifacts.
 - Developed a FastAPI inference service with schema validation, health checks,
@@ -56,10 +59,11 @@ OpenAPI docs, and a simple local browser UI at `/docs`.
 The project uses `skops` for the serving artifact because it is a safer format
 for scikit-learn model persistence than raw pickle or joblib.
 
-### Why kind?
+### Why OrbStack?
 
-`kind` allows the same API container to be deployed to a local Kubernetes
-cluster. This demonstrates deployment patterns without requiring a cloud account.
+OrbStack provides a lightweight local Kubernetes cluster that shares the local
+Docker image workflow. This demonstrates deployment patterns without requiring a
+cloud account or a separate image registry.
 
 ## Demo Script
 
@@ -68,25 +72,25 @@ cluster. This demonstrates deployment patterns without requiring a cloud account
 2. Run data preparation:
 
 ```bash
-.venv/bin/python -m mlops_tabular.data
+python3 -m mlops_tabular.data
 ```
 
 3. Run training:
 
 ```bash
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.train
 ```
 
 4. Open MLflow:
 
 ```bash
-MLFLOW_ALLOW_FILE_STORE=true .venv/bin/mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
+PYTHONPATH=. MLFLOW_ALLOW_FILE_STORE=true python3 -m mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
 ```
 
 5. Start the API:
 
 ```bash
-.venv/bin/uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
+python3 -m uvicorn mlops_tabular.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 6. Open FastAPI docs:
@@ -100,12 +104,11 @@ http://127.0.0.1:8000/docs
 
 8. Show `/metrics` and explain the prediction count and latency metrics.
 
-9. Optionally deploy to `kind`:
+9. Optionally deploy to OrbStack Kubernetes:
 
 ```bash
-kind create cluster --name tabular-mlops-lab --config k8s/kind/cluster.yaml
+kubectl config use-context orbstack
 docker build -t tabular-mlops-lab:latest .
-kind load docker-image tabular-mlops-lab:latest --name tabular-mlops-lab
 kubectl apply -k k8s/base
 kubectl port-forward service/tabular-mlops-api 8000:80
 ```

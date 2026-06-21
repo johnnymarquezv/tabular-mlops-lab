@@ -14,6 +14,7 @@ import mlflow.sklearn
 import pandas as pd
 import skops.io as sio
 from mlflow.models import infer_signature
+from mlflow.tracking import MlflowClient
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.pipeline import Pipeline
@@ -38,6 +39,9 @@ class TrainingResult:
     metrics_path: Path
     metrics: dict[str, float]
     run_id: str
+    registered_model_name: str
+    registered_model_version: str
+    registered_model_alias: str
 
 
 def _split_features_and_target(
@@ -113,12 +117,23 @@ def train_model(active_settings: Settings = settings) -> TrainingResult:
         mlflow.log_metrics(metrics)
 
         signature = infer_signature(x_train, pipeline.predict(x_train))
-        mlflow.sklearn.log_model(
+        model_info = mlflow.sklearn.log_model(
             sk_model=pipeline,
             name="model",
             serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_SKOPS,
             signature=signature,
             input_example=x_train.head(3),
+        )
+        model_version = mlflow.register_model(
+            model_info.model_uri,
+            active_settings.mlflow_registered_model_name,
+            tags={"mlflow_run_id": run_id},
+        )
+        registered_model_version = str(model_version.version)
+        MlflowClient().set_registered_model_alias(
+            active_settings.mlflow_registered_model_name,
+            active_settings.mlflow_model_alias,
+            registered_model_version,
         )
 
         model_bundle: dict[str, Any] = {
@@ -127,6 +142,9 @@ def train_model(active_settings: Settings = settings) -> TrainingResult:
             "target_names": label_names,
             "metrics": metrics,
             "mlflow_run_id": run_id,
+            "mlflow_registered_model_name": active_settings.mlflow_registered_model_name,
+            "mlflow_registered_model_version": registered_model_version,
+            "mlflow_model_alias": active_settings.mlflow_model_alias,
         }
         sio.dump(model_bundle, MODEL_PATH)
 
@@ -138,6 +156,9 @@ def train_model(active_settings: Settings = settings) -> TrainingResult:
         metrics_path=METRICS_PATH,
         metrics=metrics,
         run_id=run_id,
+        registered_model_name=active_settings.mlflow_registered_model_name,
+        registered_model_version=registered_model_version,
+        registered_model_alias=active_settings.mlflow_model_alias,
     )
 
 
@@ -146,6 +167,11 @@ def main() -> None:
     parser.parse_args()
     result = train_model()
     print(f"MLflow run: {result.run_id}")
+    print(
+        "Registered model: "
+        f"{result.registered_model_name} version {result.registered_model_version} "
+        f"alias {result.registered_model_alias}"
+    )
     print(f"Model saved to {result.model_path}")
     print(f"Metrics saved to {result.metrics_path}")
     print(json.dumps(result.metrics, indent=2, sort_keys=True))

@@ -26,6 +26,9 @@ def test_health_reports_loaded_model() -> None:
     assert body["status"] == "ok"
     assert body["model_loaded"] is True
     assert body["mlflow_run_id"]
+    assert body["registered_model_name"] == "tabular-mlops-classifier"
+    assert body["registered_model_version"]
+    assert body["registered_model_alias"] == "champion"
 
 
 def test_predict_returns_class_and_probabilities() -> None:
@@ -40,3 +43,6 @@ def test_predict_returns_class_and_probabilities() -> None:
     assert body["predicted_class"] in {0, 1}
     assert body["predicted_label"] in {"malignant", "benign"}
     assert set(body["probabilities"]) == {"malignant", "benign"}
+    assert body["registered_model_name"] == "tabular-mlops-classifier"
+    assert body["registered_model_version"]
+    assert body["registered_model_alias"] == "champion"

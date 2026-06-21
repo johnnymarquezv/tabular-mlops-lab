@@ -9,13 +9,13 @@ from source code.
 Created by:
 
 ```bash
-.venv/bin/python -m mlops_tabular.data
+python3 -m mlops_tabular.data
 ```
 
 Also created or refreshed by:
 
 ```bash
-.venv/bin/dvc repro
+python3 -m dvc repro
 ```
 
 Purpose:
@@ -51,7 +51,7 @@ change even when code stays the same.
 Created by:
 
 ```bash
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.train
 ```
 
 Purpose:
@@ -69,6 +69,7 @@ Files:
 - target names
 - latest metrics
 - MLflow run id
+- registered model name, version, and alias
 
 The API reads this file when serving predictions. If it is missing, `/health`
 returns a degraded state and `/predict` cannot run inference.
@@ -84,7 +85,7 @@ plain pickle as the project-level model artifact.
 Created by:
 
 ```bash
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.train
 ```
 
 Purpose:
@@ -113,12 +114,12 @@ pipeline output.
 Created by:
 
 ```bash
-.venv/bin/python -m mlops_tabular.train
+python3 -m mlops_tabular.train
 ```
 
 Purpose:
 
-`mlruns/` is MLflow's local file-backed tracking store.
+`mlruns/` is MLflow's local file-backed tracking and registry store.
 
 It contains:
 
@@ -128,11 +129,12 @@ It contains:
 - metrics
 - model metadata
 - logged artifacts
+- registered model metadata and versions
 
 Open it with:
 
 ```bash
-MLFLOW_ALLOW_FILE_STORE=true .venv/bin/mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
+PYTHONPATH=. MLFLOW_ALLOW_FILE_STORE=true python3 -m mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
 ```
 
 Then visit:
@@ -142,29 +144,6 @@ http://127.0.0.1:5000
 ```
 
 Do not manually edit files inside `mlruns/`. Use the MLflow UI or MLflow APIs.
-
-## `.venv/`
-
-Created during setup:
-
-```bash
-python3 -m venv .venv
-```
-
-Purpose:
-
-`.venv/` is the local Python environment. It contains installed dependencies and
-command-line tools such as:
-
-- `.venv/bin/python`
-- `.venv/bin/pytest`
-- `.venv/bin/ruff`
-- `.venv/bin/mypy`
-- `.venv/bin/dvc`
-- `.venv/bin/mlflow`
-- `.venv/bin/uvicorn`
-
-This directory is local-only and ignored by Git.
 
 ## `.dvc/`
 
@@ -183,7 +162,7 @@ edited manually.
 Created or updated by:
 
 ```bash
-.venv/bin/dvc repro
+python3 -m dvc repro
 ```
 
 Purpose:
@@ -225,7 +204,6 @@ Normally commit:
 
 Normally do not commit:
 
-- `.venv/`
 - `data/`
 - `models/`
 - `reports/`

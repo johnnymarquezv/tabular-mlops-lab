@@ -1,6 +1,6 @@
 stages:
   prepare_data:
-    cmd: .venv/bin/python -m mlops_tabular.data
+    cmd: python3 -m mlops_tabular.data
     deps:
       - src/mlops_tabular/data.py
       - src/mlops_tabular/config.py
@@ -10,7 +10,7 @@ stages:
       - data/processed/test.csv
 
   train:
-    cmd: .venv/bin/python -m mlops_tabular.train
+    cmd: python3 -m mlops_tabular.train
     deps:
       - data/processed/train.csv
       - data/processed/test.csv
